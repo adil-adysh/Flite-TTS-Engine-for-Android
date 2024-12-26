@@ -1,0 +1,61 @@
+name: Build Flite TTS APK
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Set up Java (required for the Android SDK)
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      # Set up the Android SDK
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 22
+          ndk: true
+          cmake: true
+
+      # Install required tools (NDK and other dependencies)
+      - name: Install NDK
+        run: |
+          echo "Installing NDK..."
+          echo y | sdkmanager "ndk;21.4.7075529"
+
+      # Export environment variables
+      - name: Export Environment Variables
+        run: |
+          echo "Setting environment variables..."
+          echo "ANDROID_NDK=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+
+      # Run the build script
+      - name: Build APK
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
+
+      # Upload the APK as an artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: FliteEngine-debug-apk
+          path: bin/FliteEngine-debug.apk
+
